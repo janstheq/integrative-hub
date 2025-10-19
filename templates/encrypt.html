@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% block title %}Encrypt Texts{% endblock %}
+{% block content %}
+<div style="background: #f5f5f5; min-height: calc(100vh - 60px); padding: 40px 20px;">
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <h1 style="color: #333; text-align: center; margin-bottom: 30px; font-size: 2.5em;">
+            🔒 Encrypt Texts
+        </h1>
+        
+        <!-- Input Section -->
+        <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <h3 style="color: #333; margin-bottom: 20px;">Enter Your Text</h3>
+            <textarea id="inputText" placeholder="Type your message here..." style="width: 100%; height: 120px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; font-family: inherit; resize: vertical; outline: none;"></textarea>
+            
+            <!-- Cipher Selection -->
+            <div style="margin: 25px 0;">
+                <h3 style="color: #333; margin-bottom: 15px;">Select Ciphers (can choose multiple)</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" class="cipher-option">
+                        <input type="checkbox" value="atbash" class="cipher-checkbox" style="width: 20px; height: 20px; cursor: pointer;">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Atbash Cipher</div>
+                            <div style="font-size: 0.85em; color: #666;">Reverses alphabet</div>
+                        </div>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" class="cipher-option">
+                        <input type="checkbox" value="caesar" class="cipher-checkbox" style="width: 20px; height: 20px; cursor: pointer;">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Caesar Cipher</div>
+                            <div style="font-size: 0.85em; color: #666;">Shifts letters</div>
+                        </div>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" class="cipher-option">
+                        <input type="checkbox" value="vigenere" class="cipher-checkbox" style="width: 20px; height: 20px; cursor: pointer;">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Vigenere Cipher</div>
+                            <div style="font-size: 0.85em; color: #666;">Uses keyword</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Cipher Options -->
+            <div id="caesarOptions" style="display: none; margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">Caesar Shift Amount:</label>
+                <input type="number" id="caesarShift" value="3" min="1" max="25" style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; width: 100px;">
+            </div>
+            
+            <div id="vigenereOptions" style="display: none; margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">Vigenere Keyword:</label>
+                <input type="text" id="vigenereKeyword" placeholder="Enter keyword (letters only)" style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; width: 100%;">
+            </div>
+            
+            <div id="errorMessage" style="color: #e53935; margin-top: 15px; display: none; font-weight: 500;"></div>
+            
+            <button onclick="encryptText()" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; margin-top: 20px; transition: all 0.3s;">
+                🔐 Encrypt Text
+            </button>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="resultsContainer" style="display: none;"></div>
+    </div>
+</div>
+
+<style>
+.cipher-option:has(input:checked) {
+    border-color: #e91e63;
+    background: #fce4ec;
+}
+textarea:focus, input:focus {
+    border-color: #e91e63;
+}
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+}
+.result-card {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<script>
+let encryptionHistory = [];
+
+// Show/hide cipher options
+document.querySelectorAll('.cipher-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        if (this.value === 'caesar') {
+            document.getElementById('caesarOptions').style.display = this.checked ? 'block' : 'none';
+        }
+        if (this.value === 'vigenere') {
+            document.getElementById('vigenereOptions').style.display = this.checked ? 'block' : 'none';
+        }
+    });
+});
+
+async function encryptText() {
+    const text = document.getElementById('inputText').value.trim();
+    const errorMsg = document.getElementById('errorMessage');
+    const selectedCiphers = Array.from(document.querySelectorAll('.cipher-checkbox:checked')).map(cb => cb.value);
+    const shift = parseInt(document.getElementById('caesarShift').value);
+    const keyword = document.getElementById('vigenereKeyword').value.trim();
+    
+    errorMsg.style.display = 'none';
+    errorMsg.textContent = '';
+    
+    if (!text) {
+        errorMsg.textContent = 'Please enter some text to encrypt';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    if (selectedCiphers.length === 0) {
+        errorMsg.textContent = 'Please select at least one cipher';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    if (selectedCiphers.includes('vigenere') && !keyword) {
+        errorMsg.textContent = 'Please enter a keyword for Vigenere cipher';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/encrypt-text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: text,
+                ciphers: selectedCiphers,
+                shift: shift,
+                keyword: keyword
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Add separate result card for each cipher
+            data.results.forEach(result => {
+                addResultCard(data.original_text, result.encrypted_text, result.cipher, result.description);
+            });
+            document.getElementById('resultsContainer').style.display = 'block';
+        } else {
+            errorMsg.textContent = data.error;
+            errorMsg.style.display = 'block';
+        }
+    } catch (error) {
+        errorMsg.textContent = 'Error: ' + error.message;
+        errorMsg.style.display = 'block';
+    }
+}
+
+function addResultCard(originalText, encryptedText, cipher, description) {
+    const container = document.getElementById('resultsContainer');
+    const resultId = 'result-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+    // Store data in the element's dataset to avoid escaping issues
+    const resultCard = document.createElement('div');
+    resultCard.className = 'result-card';
+    resultCard.id = resultId;
+    resultCard.dataset.encryptedText = encryptedText;
+    resultCard.dataset.cipher = cipher;
+    resultCard.dataset.description = description;
+
+    resultCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #333; margin: 0; display: flex; align-items: center; gap: 10px;">
+                <span style="background: #e91e63; color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.9em;">
+                    ${cipher}
+                </span>
+                <span style="color: #666; font-size: 0.8em; font-weight: normal;">${description}</span>
+            </h3>
+            <button onclick="removeResult('${resultId}')" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em;">
+                🗑️ Remove
+            </button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <div style="font-weight: 600; color: #666; margin-bottom: 8px;">Original Text:</div>
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; word-wrap: break-word;">
+                ${originalText}
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <div style="font-weight: 600; color: #666; margin-bottom: 8px;">Encrypted Text:</div>
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; word-wrap: break-word; font-family: monospace; font-size: 1.1em;">
+                ${encryptedText}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
+            <button onclick="copyEncryptedById('${resultId}')" style="padding: 12px; background: #4caf50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; font-weight: 600;">
+                📋 Copy
+            </button>
+            <button onclick="generateQRById('${resultId}')" style="padding: 12px; background: #1e88e5; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; font-weight: 600;">
+                📱 QR Code
+            </button>
+            <button onclick="downloadEncryptedById('${resultId}')" style="padding: 12px; background: #ff9800; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; font-weight: 600;">
+                💾 Download
+            </button>
+            <button onclick="showEmailModal('${resultId}')" style="padding: 12px; background: #ea4335; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; font-weight: 600;">
+                📧 Email
+            </button>
+        </div>
+
+        <div id="${resultId}-qr" style="display: none; margin-top: 20px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+            <img id="${resultId}-qr-img" src="" alt="QR Code" style="max-width: 300px; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px; background: white;">
+        </div>
+
+        <div id="${resultId}-email" style="display: none; margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+            <h4 style="margin: 0 0 15px 0; color: #333;">📧 Send via Email</h4>
+            <input type="email" id="${resultId}-email-input" placeholder="recipient@example.com" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 15px; font-size: 1em; outline: none;">
+            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer; color: #666;">
+                <input type="checkbox" id="${resultId}-email-qr" style="width: 18px; height: 18px; cursor: pointer;">
+                <span>Include QR code in email</span>
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="sendEncryptedEmail('${resultId}')" style="flex: 1; padding: 12px; background: #ea4335; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Send Email
+                </button>
+                <button onclick="hideEmailModal('${resultId}')" style="padding: 12px 20px; background: #999; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
+            <div id="${resultId}-email-status" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none; text-align: center; font-weight: 500;"></div>
+        </div>
+    `;
+
+    container.insertBefore(resultCard, container.firstChild);
+}
+
+// Updated helper functions
+function copyEncryptedById(resultId) {
+    const card = document.getElementById(resultId);
+    const text = card.dataset.encryptedText;
+    navigator.clipboard.writeText(text);
+    alert('Encrypted text copied to clipboard!');
+}
+
+async function generateQRById(resultId) {
+    const card = document.getElementById(resultId);
+    const text = card.dataset.encryptedText;
+
+    try {
+        const response = await fetch('/api/generate-qr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById(resultId + '-qr-img').src = data.qr_code;
+            document.getElementById(resultId + '-qr').style.display = 'block';
+        } else {
+            alert('Failed to generate QR: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function downloadEncryptedById(resultId) {
+    const card = document.getElementById(resultId);
+    const text = card.dataset.encryptedText;
+    const cipher = card.dataset.cipher;
+
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `encrypted_${cipher.toLowerCase()}_text.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+function showEmailModal(resultId) {
+    document.getElementById(resultId + '-email').style.display = 'block';
+}
+
+function hideEmailModal(resultId) {
+    document.getElementById(resultId + '-email').style.display = 'none';
+    document.getElementById(resultId + '-email-status').style.display = 'none';
+}
+
+async function sendEncryptedEmail(resultId) {
+    const card = document.getElementById(resultId);
+    const encryptedText = card.dataset.encryptedText;
+    const cipherName = card.dataset.cipher;
+    const description = card.dataset.description;
+
+    const emailInput = document.getElementById(resultId + '-email-input');
+    const email = emailInput.value.trim();
+    const includeQR = document.getElementById(resultId + '-email-qr').checked;
+    const emailStatus = document.getElementById(resultId + '-email-status');
+
+    if (!email) {
+        alert('Please enter a recipient email');
+        return;
+    }
+
+    let qrImage = '';
+    if (includeQR) {
+        const qrImg = document.getElementById(resultId + '-qr-img');
+        if (!qrImg.src || qrImg.src === window.location.href) {
+            // Generate QR first if not already generated
+            try {
+                const response = await fetch('/api/generate-qr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: encryptedText })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    qrImage = data.qr_code;
+                } else {
+                    alert('Failed to generate QR code');
+                    return;
+                }
+            } catch (error) {
+                alert('Error generating QR: ' + error.message);
+                return;
+            }
+        } else {
+            qrImage = qrImg.src;
+        }
+    }
+
+    emailStatus.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/send-encrypted-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email,
+                encrypted_text: encryptedText,
+                cipher_name: cipherName,
+                cipher_description: description,
+                include_qr: includeQR,
+                qr_image: qrImage
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            emailStatus.textContent = '✅ ' + data.message;
+            emailStatus.style.background = '#d4edda';
+            emailStatus.style.color = '#155724';
+            emailStatus.style.display = 'block';
+            emailInput.value = '';
+        } else {
+            emailStatus.textContent = '❌ ' + data.error;
+            emailStatus.style.background = '#f8d7da';
+            emailStatus.style.color = '#721c24';
+            emailStatus.style.display = 'block';
+        }
+    } catch (error) {
+        emailStatus.textContent = '❌ Error: ' + error.message;
+        emailStatus.style.background = '#f8d7da';
+        emailStatus.style.color = '#721c24';
+        emailStatus.style.display = 'block';
+    }
+}
+
+function removeResult(resultId) {
+    document.getElementById(resultId).remove();
+    if (document.getElementById('resultsContainer').children.length === 0) {
+        document.getElementById('resultsContainer').style.display = 'none';
+    }
+}
+
+function copyEncrypted(text, resultId) {
+    navigator.clipboard.writeText(text);
+    alert('Encrypted text copied to clipboard!');
+}
+
+async function generateQRForEncrypted(text, resultId) {
+    try {
+        const response = await fetch('/api/generate-qr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById(resultId + '-qr-img').src = data.qr_code;
+            document.getElementById(resultId + '-qr').style.display = 'block';
+        } else {
+            alert('Failed to generate QR: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function downloadEncrypted(text, cipher) {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `encrypted_${cipher.toLowerCase()}_text.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

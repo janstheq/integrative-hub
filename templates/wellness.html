@@ -1,0 +1,588 @@
+{% extends 'base.html' %}
+{% block title %}Wellness Tracker{% endblock %}
+{% block content %}
+<div style="background: #f5f5f5; min-height: calc(100vh - 60px); padding: 40px 20px;">
+    <div style="max-width: 1400px; margin: 0 auto;">
+        <h1 style="color: #333; text-align: center; margin-bottom: 10px; font-size: 2.5em;">
+            💚 Academic Wellness Tracker
+        </h1>
+        <p style="text-align: center; color: #666; margin-bottom: 40px; font-size: 1.1em;">
+            Track your mental health, sleep patterns, and academic goals
+        </p>
+        
+        <!-- Analytics Dashboard -->
+        <div id="analytics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 10px;">Avg Stress (7 days)</div>
+                <div id="avgStress" style="font-size: 2.5em; font-weight: bold;">-</div>
+                <div style="font-size: 0.85em; opacity: 0.8;">out of 10</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); padding: 25px; border-radius: 15px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 10px;">Avg Sleep (7 days)</div>
+                <div id="avgSleep" style="font-size: 2.5em; font-weight: bold;">-</div>
+                <div style="font-size: 0.85em; opacity: 0.8;">hours</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); padding: 25px; border-radius: 15px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 10px;">Goals Completed</div>
+                <div id="goalsCompleted" style="font-size: 2.5em; font-weight: bold;">-</div>
+                <div style="font-size: 0.85em; opacity: 0.8;" id="totalGoals">of - total</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 25px; border-radius: 15px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 10px;">Total Check-ins</div>
+                <div id="totalCheckins" style="font-size: 2.5em; font-weight: bold;">-</div>
+                <div style="font-size: 0.85em; opacity: 0.8;">mood & sleep logs</div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div style="background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden;">
+            <div style="display: flex; border-bottom: 2px solid #e0e0e0;">
+                <button onclick="showTab('mood')" id="tab-mood" class="tab-btn active" style="flex: 1; padding: 20px; background: white; border: none; cursor: pointer; font-size: 1.1em; font-weight: 600; color: #667eea; border-bottom: 3px solid #667eea; transition: all 0.3s;">
+                    😊 Mood & Stress
+                </button>
+                <button onclick="showTab('sleep')" id="tab-sleep" class="tab-btn" style="flex: 1; padding: 20px; background: white; border: none; cursor: pointer; font-size: 1.1em; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s;">
+                    😴 Sleep Tracker
+                </button>
+                <button onclick="showTab('goals')" id="tab-goals" class="tab-btn" style="flex: 1; padding: 20px; background: white; border: none; cursor: pointer; font-size: 1.1em; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s;">
+                    🎯 Goals
+                </button>
+                <button onclick="showTab('breaks')" id="tab-breaks" class="tab-btn" style="flex: 1; padding: 20px; background: white; border: none; cursor: pointer; font-size: 1.1em; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s;">
+                    ⏰ Break Reminders
+                </button>
+            </div>
+            
+            <div style="padding: 40px;">
+                <!-- MOOD TAB -->
+                <div id="mood-tab" class="tab-content">
+                    <h2 style="color: #333; margin-bottom: 25px;">Daily Mood & Stress Check-in</h2>
+                    <div style="background: #f9f9f9; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">How are you feeling today?</label>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <label class="mood-option" style="padding: 15px 25px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s;">
+                                    <input type="radio" name="mood" value="happy" style="margin-right: 8px;"> 😊 Happy
+                                </label>
+                                <label class="mood-option" style="padding: 15px 25px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s;">
+                                    <input type="radio" name="mood" value="neutral" style="margin-right: 8px;"> 😐 Neutral
+                                </label>
+                                <label class="mood-option" style="padding: 15px 25px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s;">
+                                    <input type="radio" name="mood" value="sad" style="margin-right: 8px;"> 😢 Sad
+                                </label>
+                                <label class="mood-option" style="padding: 15px 25px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s;">
+                                    <input type="radio" name="mood" value="stressed" style="margin-right: 8px;"> 😰 Stressed
+                                </label>
+                                <label class="mood-option" style="padding: 15px 25px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.3s;">
+                                    <input type="radio" name="mood" value="anxious" style="margin-right: 8px;"> 😟 Anxious
+                                </label>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Stress Level (1-10):</label>
+                            <input type="range" id="stressLevel" min="1" max="10" value="5" style="width: 100%; height: 8px; margin-bottom: 10px;">
+                            <div style="text-align: center; font-size: 1.5em; font-weight: bold; color: #667eea;" id="stressValue">5</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Notes (optional):</label>
+                            <textarea id="moodNotes" placeholder="How's your day going?" style="width: 100%; height: 80px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                        </div>
+                        <button onclick="saveMoodLog()" style="width: 100%; padding: 15px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer;">
+                            Save Check-in
+                        </button>
+                    </div>
+                    <h3 style="color: #333; margin-bottom: 20px;">Recent Check-ins</h3>
+                    <div id="moodLogs"></div>
+                </div>
+                
+                <!-- SLEEP TAB -->
+                <div id="sleep-tab" class="tab-content" style="display: none;">
+                    <h2 style="color: #333; margin-bottom: 25px;">Sleep Pattern Tracker</h2>
+                    <div style="background: #f9f9f9; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Hours of Sleep:</label>
+                            <input type="number" id="sleepHours" min="0" max="24" step="0.5" placeholder="e.g., 7.5" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Sleep Quality:</label>
+                            <select id="sleepQuality" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                                <option value="">Select quality</option>
+                                <option value="excellent">😴 Excellent</option>
+                                <option value="good">😊 Good</option>
+                                <option value="fair">😐 Fair</option>
+                                <option value="poor">😵 Poor</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Academic Performance Today:</label>
+                            <select id="academicPerformance" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                                <option value="">Select performance</option>
+                                <option value="excellent">🌟 Excellent</option>
+                                <option value="good">✅ Good</option>
+                                <option value="fair">📝 Fair</option>
+                                <option value="poor">😓 Poor</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Notes (optional):</label>
+                            <textarea id="sleepNotes" placeholder="Any observations?" style="width: 100%; height: 80px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                        </div>
+                        <button onclick="saveSleepLog()" style="width: 100%; padding: 15px; background: #1e88e5; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer;">
+                            Save Sleep Log
+                        </button>
+                    </div>
+                    <h3 style="color: #333; margin-bottom: 20px;">Sleep History</h3>
+                    <div id="sleepLogs"></div>
+                </div>
+                
+                <!-- GOALS TAB -->
+                <div id="goals-tab" class="tab-content" style="display: none;">
+                    <h2 style="color: #333; margin-bottom: 25px;">Academic Goals</h2>
+                    <div style="background: #f9f9f9; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Goal Title:</label>
+                            <input type="text" id="goalTitle" placeholder="e.g., Complete Math Assignment" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Description:</label>
+                            <textarea id="goalDescription" placeholder="Details about your goal" style="width: 100%; height: 80px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Target Date:</label>
+                            <input type="date" id="goalDate" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <button onclick="saveGoal()" style="width: 100%; padding: 15px; background: #4caf50; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer;">
+                            Add Goal
+                        </button>
+                    </div>
+                    <h3 style="color: #333; margin-bottom: 20px;">Your Goals</h3>
+                    <div id="goalsList"></div>
+                </div>
+                
+                <!-- BREAKS TAB -->
+                <div id="breaks-tab" class="tab-content" style="display: none;">
+                    <h2 style="color: #333; margin-bottom: 25px;">Break Reminders</h2>
+                    <div style="background: #f9f9f9; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Activity:</label>
+                            <input type="text" id="breakActivity" placeholder="e.g., Walk, Stretch, Meditate" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Duration (minutes):</label>
+                            <input type="number" id="breakDuration" min="5" max="120" placeholder="15" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px;">Scheduled Time:</label>
+                            <input type="time" id="breakTime" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <button onclick="saveBreak()" style="width: 100%; padding: 15px; background: #ff9800; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer;">
+                            Schedule Break
+                        </button>
+                    </div>
+                    <h3 style="color: #333; margin-bottom: 20px;">Scheduled Breaks</h3>
+                    <div id="breaksList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tab-btn.active {
+    color: #667eea !important;
+    border-bottom-color: #667eea !important;
+}
+.tab-btn:hover {
+    background: #f9f9f9;
+}
+.mood-option:has(input:checked) {
+    border-color: #667eea;
+    background: #f3f4ff;
+}
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+</style>
+
+<script>
+document.getElementById('stressLevel').addEventListener('input', function() {
+    document.getElementById('stressValue').textContent = this.value;
+});
+
+let currentTab = 'mood';
+
+function showTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = '#666';
+        btn.style.borderBottomColor = 'transparent';
+    });
+    
+    document.getElementById(tab + '-tab').style.display = 'block';
+    const activeBtn = document.getElementById('tab-' + tab);
+    activeBtn.classList.add('active');
+    activeBtn.style.color = '#667eea';
+    activeBtn.style.borderBottomColor = '#667eea';
+    
+    currentTab = tab;
+    
+    if (tab === 'mood') loadMoodLogs();
+    else if (tab === 'sleep') loadSleepLogs();
+    else if (tab === 'goals') loadGoals();
+    else if (tab === 'breaks') loadBreaks();
+}
+
+async function loadAnalytics() {
+    try {
+        const response = await fetch('/api/wellness/analytics');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('avgStress').textContent = data.analytics.avg_stress_7days || '-';
+            document.getElementById('avgSleep').textContent = data.analytics.avg_sleep_7days || '-';
+            document.getElementById('goalsCompleted').textContent = data.analytics.goal_stats.completed;
+            document.getElementById('totalGoals').textContent = `of ${data.analytics.goal_stats.total} total`;
+            document.getElementById('totalCheckins').textContent = data.analytics.total_mood_logs + data.analytics.total_sleep_logs;
+        }
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+    }
+}
+
+async function saveMoodLog() {
+    const mood = document.querySelector('input[name="mood"]:checked');
+    const stressLevel = document.getElementById('stressLevel').value;
+    const notes = document.getElementById('moodNotes').value;
+    
+    if (!mood) {
+        alert('Please select your mood');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/wellness/mood', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                date: new Date().toISOString().split('T')[0],
+                mood: mood.value,
+                stress_level: parseInt(stressLevel),
+                notes: notes
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('✅ Mood check-in saved!');
+            document.querySelector('input[name="mood"]:checked').checked = false;
+            document.getElementById('stressLevel').value = 5;
+            document.getElementById('stressValue').textContent = 5;
+            document.getElementById('moodNotes').value = '';
+            loadMoodLogs();
+            loadAnalytics();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function loadMoodLogs() {
+    try {
+        const response = await fetch('/api/wellness/mood');
+        const data = await response.json();
+        
+        const container = document.getElementById('moodLogs');
+        if (data.logs && data.logs.length > 0) {
+            container.innerHTML = data.logs.reverse().map(log => `
+                <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: 600; color: #333;">${log.date}</span>
+                        <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9em;">
+                            Stress: ${log.stress_level}/10
+                        </span>
+                    </div>
+                    <div style="font-size: 1.2em; margin-bottom: 10px;">
+                        ${getMoodEmoji(log.mood)} ${log.mood.charAt(0).toUpperCase() + log.mood.slice(1)}
+                    </div>
+                    ${log.notes ? `<div style="color: #666; font-style: italic;">"${log.notes}"</div>` : ''}
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p style="text-align: center; color: #999;">No check-ins yet. Start tracking your mood!</p>';
+        }
+    } catch (error) {
+        console.error('Error loading mood logs:', error);
+    }
+}
+
+function getMoodEmoji(mood) {
+    const emojis = {happy: '😊', neutral: '😐', sad: '😢', stressed: '😰', anxious: '😟'};
+    return emojis[mood] || '😐';
+}
+
+async function saveSleepLog() {
+    const hours = document.getElementById('sleepHours').value;
+    const quality = document.getElementById('sleepQuality').value;
+    const performance = document.getElementById('academicPerformance').value;
+    const notes = document.getElementById('sleepNotes').value;
+    
+    if (!hours || !quality || !performance) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/wellness/sleep', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                date: new Date().toISOString().split('T')[0],
+                sleep_hours: parseFloat(hours),
+                sleep_quality: quality,
+                academic_performance: performance,
+                notes: notes
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('✅ Sleep log saved!');
+            document.getElementById('sleepHours').value = '';
+            document.getElementById('sleepQuality').value = '';
+            document.getElementById('academicPerformance').value = '';
+            document.getElementById('sleepNotes').value = '';
+            loadSleepLogs();
+            loadAnalytics();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function loadSleepLogs() {
+    try {
+        const response = await fetch('/api/wellness/sleep');
+        const data = await response.json();
+        
+        const container = document.getElementById('sleepLogs');
+        if (data.logs && data.logs.length > 0) {
+            container.innerHTML = data.logs.reverse().map(log => `
+                <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #1e88e5;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-weight: 600; color: #333;">${log.date}</span>
+                        <span style="background: #1e88e5; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9em;">
+                            ${log.sleep_hours}h
+                        </span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div><strong>Sleep Quality:</strong> ${log.sleep_quality}</div>
+                        <div><strong>Performance:</strong> ${log.academic_performance}</div>
+                    </div>
+                    ${log.notes ? `<div style="color: #666; font-style: italic;">"${log.notes}"</div>` : ''}
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p style="text-align: center; color: #999;">No sleep logs yet. Start tracking!</p>';
+        }
+    } catch (error) {
+        console.error('Error loading sleep logs:', error);
+    }
+}
+
+async function saveGoal() {
+    const title = document.getElementById('goalTitle').value;
+    const description = document.getElementById('goalDescription').value;
+    const targetDate = document.getElementById('goalDate').value;
+    
+    if (!title || !description || !targetDate) {
+        alert('Please fill in all fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/wellness/goals', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title: title,
+                description: description,
+                target_date: targetDate,
+                status: 'pending'
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('✅ Goal added!');
+            document.getElementById('goalTitle').value = '';
+            document.getElementById('goalDescription').value = '';
+            document.getElementById('goalDate').value = '';
+            loadGoals();
+            loadAnalytics();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function loadGoals() {
+    try {
+        const response = await fetch('/api/wellness/goals');
+        const data = await response.json();
+        
+        const container = document.getElementById('goalsList');
+        if (data.goals && data.goals.length > 0) {
+            container.innerHTML = data.goals.map(goal => `
+                <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid ${getGoalColor(goal.status)};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <h4 style="color: #333; margin-bottom: 5px;">${goal.title}</h4>
+                            <p style="color: #666; margin-bottom: 10px;">${goal.description}</p>
+                            <div style="font-size: 0.9em; color: #999;">Target: ${goal.target_date}</div>
+                        </div>
+                        <select onchange="updateGoalStatus(${goal.id}, this.value)" style="padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9em;">
+                            <option value="pending" ${goal.status === 'pending' ? 'selected' : ''}>📋 Pending</option>
+                            <option value="in_progress" ${goal.status === 'in_progress' ? 'selected' : ''}>🔄 In Progress</option>
+                            <option value="completed" ${goal.status === 'completed' ? 'selected' : ''}>✅ Completed</option>
+                        </select>
+                    </div>
+                    <button onclick="deleteGoal(${goal.id})" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 0.9em; cursor: pointer;">
+                        🗑️ Delete
+                    </button>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p style="text-align: center; color: #999;">No goals yet. Set your first goal!</p>';
+        }
+    } catch (error) {
+        console.error('Error loading goals:', error);
+    }
+}
+
+function getGoalColor(status) {
+    return status === 'completed' ? '#4caf50' : status === 'in_progress' ? '#ff9800' : '#999';
+}
+
+async function updateGoalStatus(goalId, status) {
+    try {
+        const response = await fetch(`/api/wellness/goals/${goalId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: status})
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            loadGoals();
+            loadAnalytics();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteGoal(goalId) {
+    if (!confirm('Delete this goal?')) return;
+    try {
+        const response = await fetch(`/api/wellness/goals/${goalId}`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            loadGoals();
+            loadAnalytics();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function saveBreak() {
+    const activity = document.getElementById('breakActivity').value;
+    const duration = document.getElementById('breakDuration').value;
+    const time = document.getElementById('breakTime').value;
+
+    if (!activity || !duration || !time) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/wellness/breaks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                activity: activity,
+                duration_minutes: parseInt(duration),
+                scheduled_time: time
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert('✅ Break scheduled!');
+            document.getElementById('breakActivity').value = '';
+            document.getElementById('breakDuration').value = '';
+            document.getElementById('breakTime').value = '';
+            loadBreaks();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function loadBreaks() {
+    try {
+        const response = await fetch('/api/wellness/breaks');
+        const data = await response.json();
+
+        const container = document.getElementById('breaksList');
+        if (data.breaks && data.breaks.length > 0) {
+            container.innerHTML = data.breaks.map(breakItem => `
+                <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #ff9800;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: #333; margin-bottom: 5px;">⏰ ${breakItem.scheduled_time}</h4>
+                            <div style="color: #666;">${breakItem.activity} (${breakItem.duration_minutes} min)</div>
+                        </div>
+                        <button onclick="deleteBreak(${breakItem.id})" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p style="text-align: center; color: #999;">No breaks scheduled. Add one!</p>';
+        }
+    } catch (error) {
+        console.error('Error loading breaks:', error);
+    }
+}
+
+async function deleteBreak(breakId) {
+    if (!confirm('Delete this break reminder?')) return;
+
+    try {
+        const response = await fetch(`/api/wellness/breaks/${breakId}`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            loadBreaks();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Initial load
+loadAnalytics();
+loadMoodLogs();
+</script>
+{% endblock %}

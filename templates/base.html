@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}Flask App{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav>
+        <div class="nav-brand">My Integrative Website</div>
+        <div class="nav-links">
+            {% if session.get('user') %}
+                <div class="nav-item">
+                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                    <div class="nav-dropdown">
+                        <a href="{{ url_for('weather') }}">
+                            <span class="nav-dropdown-icon">☀️</span>
+                            <span>Weather Monitoring</span>
+                        </a>
+                        <a href="{{ url_for('jokes') }}">
+                            <span class="nav-dropdown-icon">🎭</span>
+                            <span>Joke Automation</span>
+                        </a>
+                        <a href="{{ url_for('encrypt') }}">
+                            <span class="nav-dropdown-icon">🔒</span>
+                            <span>Encrypt Texts</span>
+                        </a>
+                        <a href="{{ url_for('wellness') }}">
+                            <span class="nav-dropdown-icon">💚</span>
+                            <span>Wellness Tracker</span>
+                        </a>
+                    </div>
+                </div>
+                {% if session.get('user').picture %}
+                    <img src="{{ session.get('user').picture }}" alt="Profile" class="nav-profile" onclick="toggleDropdown()">
+                {% else %}
+                    <div class="nav-profile-icon" onclick="toggleDropdown()">👤</div>
+                {% endif %}
+
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        {% if session.get('user').picture %}
+                            <img src="{{ session.get('user').picture }}" alt="Profile">
+                        {% else %}
+                            <div style="width: 70px; height: 70px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 2em; color: #1e88e5;">👤</div>
+                        {% endif %}
+                        <h4>{{ session.get('user').name }}</h4>
+                        <p>{{ session.get('user').email }}</p>
+                    </div>
+                    <div class="dropdown-menu">
+                        <<a href="{{ url_for('profile') }}" class="dropdown-item">
+                            <span class="dropdown-item-icon">👤</span>
+                            <span>My Profile</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <button onclick="confirmLogout()" class="dropdown-item">
+                            <span class="dropdown-item-icon">🚪</span>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('login') }}">Sign Up</a>
+                <div class="nav-profile-icon">👤</div>
+            {% endif %}
+        </div>
+    </nav>
+    {% for message in get_flashed_messages() %}
+        <div class="alert">{{ message }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+
+    <script>
+        function toggleDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.nav-profile') && !event.target.matches('.nav-profile-icon')) {
+                const dropdown = document.getElementById('profileDropdown');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        }
+
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = "{{ url_for('logout') }}";
+                return true;
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>

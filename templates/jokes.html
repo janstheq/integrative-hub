@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}Joke Automation{% endblock %}
+{% block content %}
+<div style="background: #f5f5f5; min-height: calc(100vh - 60px); padding: 40px 20px;">
+    <div style="max-width: 900px; margin: 0 auto;">
+        <h1 style="color: #333; text-align: center; margin-bottom: 30px; font-size: 2.5em;">
+            🎭 Joke Automation
+        </h1>
+        
+        <!-- Generate Joke Button -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <button onclick="generateJoke()" style="padding: 15px 40px; background: linear-gradient(135deg, #00bfa5 0%, #00897b 100%); color: white; border: none; border-radius: 12px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,191,165,0.3);">
+                🎲 Generate Random Joke
+            </button>
+        </div>
+        
+        <!-- Loading -->
+        <div id="loading" style="text-align: center; display: none; margin: 30px 0;">
+            <div style="display: inline-block; width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top-color: #00bfa5; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        </div>
+        
+        <!-- Joke Display -->
+        <div id="jokeContainer" style="display: none;">
+            <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <span id="jokeCategory" style="background: #00bfa5; color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.9em; font-weight: 600;"></span>
+                    <button onclick="copyJoke()" style="padding: 8px 20px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em;">
+                        📋 Copy
+                    </button>
+                </div>
+                <div id="jokeText" style="font-size: 1.3em; line-height: 1.8; color: #333; white-space: pre-wrap; min-height: 80px;"></div>
+            </div>
+            
+            <!-- Actions Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- QR Code Section -->
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="color: #333; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">📱</span> Generate QR Code
+                    </h3>
+                    <p style="color: #666; margin-bottom: 20px; font-size: 0.95em;">Create a QR code for this joke that others can scan</p>
+                    <button onclick="generateQR()" id="qrBtn" style="width: 100%; padding: 12px; background: #1e88e5; color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                        Generate QR Code
+                    </button>
+                    <div id="qrDisplay" style="margin-top: 20px; text-align: center; display: none;">
+                        <img id="qrImage" src="" alt="QR Code" style="max-width: 100%; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px; background: white;">
+                        <button onclick="downloadQR()" style="margin-top: 15px; padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em;">
+                            💾 Download QR
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Email Section -->
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3 style="color: #333; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">📧</span> Send via Email
+                    </h3>
+                    <p style="color: #666; margin-bottom: 20px; font-size: 0.95em;">Share this joke with someone via automated email</p>
+                    <input type="email" id="recipientEmail" placeholder="recipient@example.com" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 15px; font-size: 1em; outline: none;">
+                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer; color: #666;">
+                        <input type="checkbox" id="includeQR" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Include QR code in email</span>
+                    </label>
+                    <button onclick="sendEmail()" id="emailBtn" style="width: 100%; padding: 12px; background: #ea4335; color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                        Send Email
+                    </button>
+                    <div id="emailStatus" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none; text-align: center; font-weight: 500;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+#recipientEmail:focus {
+    border-color: #ea4335;
+}
+</style>
+
+<script>
+let currentJoke = '';
+let currentQR = '';
+
+async function generateJoke() {
+    const loading = document.getElementById('loading');
+    const container = document.getElementById('jokeContainer');
+    const qrDisplay = document.getElementById('qrDisplay');
+    
+    loading.style.display = 'block';
+    container.style.display = 'none';
+    qrDisplay.style.display = 'none';
+    currentQR = '';
+    
+    try {
+        const response = await fetch('/api/joke');
+        const data = await response.json();
+        
+        if (data.success) {
+            currentJoke = data.joke;
+            document.getElementById('jokeText').textContent = data.joke;
+            document.getElementById('jokeCategory').textContent = data.category;
+            container.style.display = 'block';
+        } else {
+            alert('Failed to fetch joke: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        loading.style.display = 'none';
+    }
+}
+
+function copyJoke() {
+    navigator.clipboard.writeText(currentJoke);
+    alert('Joke copied to clipboard!');
+}
+
+async function generateQR() {
+    if (!currentJoke) return;
+    
+    const qrBtn = document.getElementById('qrBtn');
+    qrBtn.disabled = true;
+    qrBtn.textContent = 'Generating...';
+    
+    try {
+        const response = await fetch('/api/generate-qr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: currentJoke })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentQR = data.qr_code;
+            document.getElementById('qrImage').src = data.qr_code;
+            document.getElementById('qrDisplay').style.display = 'block';
+        } else {
+            alert('Failed to generate QR: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        qrBtn.disabled = false;
+        qrBtn.textContent = 'Generate QR Code';
+    }
+}
+
+function downloadQR() {
+    if (!currentQR) return;
+    
+    const link = document.createElement('a');
+    link.href = currentQR;
+    link.download = 'joke_qr_code.png';
+    link.click();
+}
+
+async function sendEmail() {
+    const email = document.getElementById('recipientEmail').value.trim();
+    const includeQR = document.getElementById('includeQR').checked;
+    const emailBtn = document.getElementById('emailBtn');
+    const emailStatus = document.getElementById('emailStatus');
+    
+    if (!email) {
+        alert('Please enter a recipient email');
+        return;
+    }
+    
+    if (!currentJoke) {
+        alert('Please generate a joke first');
+        return;
+    }
+    
+    if (includeQR && !currentQR) {
+        alert('Please generate QR code first or uncheck the option');
+        return;
+    }
+    
+    emailBtn.disabled = true;
+    emailBtn.textContent = 'Sending...';
+    emailStatus.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/send-joke-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email,
+                joke: currentJoke,
+                include_qr: includeQR,
+                qr_image: currentQR
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            emailStatus.textContent = '✅ ' + data.message;
+            emailStatus.style.background = '#d4edda';
+            emailStatus.style.color = '#155724';
+            emailStatus.style.display = 'block';
+            document.getElementById('recipientEmail').value = '';
+        } else {
+            emailStatus.textContent = '❌ ' + data.error;
+            emailStatus.style.background = '#f8d7da';
+            emailStatus.style.color = '#721c24';
+            emailStatus.style.display = 'block';
+        }
+    } catch (error) {
+        emailStatus.textContent = '❌ Error: ' + error.message;
+        emailStatus.style.background = '#f8d7da';
+        emailStatus.style.color = '#721c24';
+        emailStatus.style.display = 'block';
+    } finally {
+        emailBtn.disabled = false;
+        emailBtn.textContent = 'Send Email';
+    }
+}
+</script>
+{% endblock %}

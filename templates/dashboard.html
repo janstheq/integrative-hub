@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% if user %}
+<div class="hero">
+    <h1>Welcome to <span class="highlight">IntegrativeHub</span></h1>
+    <p>Hello, {{ user.name }}! Your comprehensive platform for integrative programming activities featuring Python API integrations, wellness tracking, weather monitoring, and automated tools.</p>
+</div>
+
+<div class="features">
+    <div class="feature-card">
+        <div class="feature-icon">☀️</div>
+        <h3 style="color: #1e88e5;">Weather Monitoring</h3>
+        <p>Real-time weather data via OpenWeatherMap with multi-location support.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🎭</div>
+        <h3 style="color: #00bfa5;">Joke Automation</h3>
+        <p>Automated daily jokes with QR and email delivery.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3 style="color: #e91e63;">Security & 2FA</h3>
+        <p>Google OAuth and Two-Factor Authentication integration.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">💚</div>
+        <h3 style="color: #4caf50;">Wellness Tracker</h3>
+        <p>Track mood, stress, sleep, and wellness. FastAPI powered analytics.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🎛️</div>
+        <h3 style="color: #ff9800;">Unified Dashboard</h3>
+        <p>Central access panel for all features in a single UI.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 style="color: #ffc107;">API Integrations</h3>
+        <p>Modern Python API, external integrations, and more.</p>
+    </div>
+</div>
+
+<div class="footer">
+    © 2025 My Website
+</div>
+{% else %}
+<div class="main-flex">
+    <div class="container">
+        <h1>Welcome to Dashboard</h1>
+        <p class="welcome">Please sign in with your Gmail account to continue</p>
+        <a href="{{ url_for('login') }}" class="btn btn-login">Sign in with Google</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
