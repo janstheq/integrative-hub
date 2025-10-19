@@ -102,7 +102,7 @@ MIT License
 
 ## 👤 Author
 
-Your Name - [Your GitHub](https://github.com/yourusername)
+Janus Daquio - https://github.com/janstheq
 ```
 
 ---
