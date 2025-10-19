@@ -20,9 +20,9 @@ SMTP_PORT = 587
 try:
     from config import OPENWEATHER_API_KEY, EMAIL_ADDRESS, EMAIL_PASSWORD
 except ImportError:
-    OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', 'c2e74fbea1196a95b90987b0694d735b')
-    EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS', 'janustheq@gmail.com')
-    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'lvrnxpfntslitjhs')
+    OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', 'YOUR_OPENWEATHER_API_KEY')
+    EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS', 'YOUR_EMAIL@gmail.com')
+    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'YOUR_APP_PASSWORD')
 
 # FastAPI Wellness Tracker URL
 FASTAPI_URL = 'http://localhost:8001'
@@ -31,8 +31,8 @@ FASTAPI_URL = 'http://localhost:8001'
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id=os.environ.get('GOOGLE_CLIENT_ID', '635907166331-72cfhmu1q7jgsfcfqjli9mq60lck1mg3.apps.googleusercontent.com'),
-    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', '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'),
+    client_id=os.environ.get('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET'),
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
         'scope': 'openid email profile'
